@@ -1,0 +1,65 @@
+{
+    "name": "punyjs-gui"
+
+    , "config": {
+        "strict": true
+        , "output": "PunyJS/ui/gui/"
+    }
+
+    , "appFileName": "${name}.js"
+    , "iocNamePrefix": "ioc-controller"
+    , "iocType": "monolith"
+    , "appType": "ioc.${iocType}"
+
+    , "base": [
+        "{PunyJS.core.proxy}/dtree.json"
+        , "{PunyJS.statenet}/common/dtree.json"
+        , "{PunyJS.ui.gui.expression}/dtree.json"
+        , "{PunyJS.ui.gui.template}/dtree.json"
+        , "{PunyJS.ui.gui.view}/dtree.json"
+    ]
+
+    , "entries": [
+        {
+            "type": "ioc.monolith"
+            , "dtree": "node.dtree.json"
+            , "config": {
+                "dtreeFileName": "node.dtree.js"
+                , "fileName": "node.index.js"
+                , "engine": "node"
+            }
+        }
+        , {
+            "type": "test"
+            , "units": {
+                "controller": 5
+                , "app": 0
+            }
+            , "config": {
+                "fileName": "node.test.json"
+            }
+        }
+        , {
+            "type": "ioc.monolith"
+            , "dtree": "browser.dtree.json"
+            , "config": {
+                "dtreeFileName": "browser.dtree.js"
+                , "fileName": "browser.index.js"
+                , "engine": "browser"
+            }
+        }
+        , {
+            "type": "test"
+            , "units": {
+                "controller": 6
+                , "app": 2
+            }
+            , "config": {
+                "fileName": "browser.test.json"
+            }
+        }
+        , "{PunyJS.ioc.manifests}/base.manifest.json"
+        , "{PunyJS.ioc.manifests}/node.manifest.json"
+        , "{PunyJS.ioc.manifests}/browser.manifest.json"
+    ]
+}

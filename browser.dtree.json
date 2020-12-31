@@ -1,0 +1,27 @@
+{
+    "performance": ["+performance"]
+    , "browser":[{
+        "crypto": ["+window.crypto"]
+    }]
+    , "node": [{
+        "process": null
+        , "crypto": null
+        , "buffer": null
+    }]
+    , "dom": [{
+        "document": ["+document"]
+        , "createElementNS": [
+            ".dom.document"
+            , ".createElementNS"
+        ]
+        , "createElement": [
+            ".dom.document"
+            , ".createElement"
+        ]
+        , "createTextNode": [
+            ".dom.document"
+            , ".createTextNode"
+        ]
+        , "mutationObserver": ["+MutationObserver"]
+    }]
+}

@@ -1,0 +1,24 @@
+{
+    "is": [{
+        "numeric": [":PunyJS.core.is.Numeric"]
+        , "func": [":PunyJS.core.is.Func"]
+        , "array": [":PunyJS.core.is.Array"]
+        , "object": [":PunyJS.core.is.Object"]
+        , "numeric": [":PunyJS.core.is.Numeric"]
+        , "string": [":PunyJS.core.is.String"]
+    }]
+    , "utils": [{
+        "getType": [":PunyJS.core.utils.GetType"]
+        , "reference": [":PunyJS.core.object.Reference"]
+        , "eval": ["+eval"]
+    }]
+    , "errors": [
+        ":PunyJS.ui.gui.expression.Errors"
+        , {"conflictResolution":"error"}
+    ]
+    , "expression": [{
+        "parser": [":PunyJS.ui.gui.expression._Parser",[]]
+        , "executor": [":PunyJS.ui.gui.expression._Executor",[]]
+        , "interface": [":PunyJS.ui.gui.expression._Interface",[]]
+    }]
+}

@@ -1,0 +1,14 @@
+{
+    "ui": {
+        "gui": {
+            "template": {
+                "missing_tag_name": "[Missing Node Name] The template requires a nodeName property."
+                , "invalid_event_callback": "[Invalid Event Callback] The callback must be a function."
+                , "change_missing_dom_fragment": "[Change Missing Dom Fragment] A change to a proxy has fired for a missing fragment id."
+                , "mutation_missing_dom_fragment": "[Mutation Missing Dom Fragment] A DOM mutation event was fired for a missing fragment id."
+                , "invalid_fragment_change_action": "[Invalid Fragment Change Action] The DOM fragment change handler was fire with an invalid event action"
+                , "element_path_missing": "[Element Path Missing] The element path does not exist in the fragment's DOM tree"
+            }
+        }
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "performance": ["+require('performance')"]
+    , "browser":[{
+        "webSocket": null
+        , "crypto": null
+        , "performance": null
+        , "userAgent": null
+    }]
+    , "node": [{
+        "process": ["+require('process')"]
+        , "tls": ["+require('tls')"]
+        , "net": ["+require('net')"]
+        , "crypto": ["+require('crypto')"]
+        , "buffer": ["+Buffer"]
+        , "os": ["+require('os')"]
+    }]
+    , "dom": [{
+        "document": null
+        , "createElementNS": null
+        , "createElement": null
+    }]
+}

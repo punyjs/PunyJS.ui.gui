@@ -1,0 +1,10 @@
+{
+    "ui": {
+        "gui": {
+            "template": {
+                "tagType": "html"
+                , "changeDelay": 50
+            }
+        }
+    }
+}

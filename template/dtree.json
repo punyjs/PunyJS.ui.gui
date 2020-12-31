@@ -1,0 +1,43 @@
+{
+    "setTimeout": ["+setTimeout"]
+    , "clearTimeout": ["+clearTimeout"]
+    , "utils": [{
+        "lookup": [":PunyJS.core.object.Lookup"]
+        , "reference": [":PunyJS.core.object.Reference"]
+        , "clear": [":PunyJS.core.object.Clear"]
+        , "copy": [":PunyJS.core.object.Copy"]
+        , "uuid": [":PunyJS.core.data._Uuid",[]]
+        , "funcDelay": [":PunyJS.core.func._Delay",[]]
+    }]
+    , "is": [{
+        "symbol": [":PunyJS.core.is.Symbol"]
+        , "objectValue": [":PunyJS.core.is.ObjectValue"]
+        , "empty": [":PunyJS.core.is.Empty"]
+    }]
+    , "errors": [
+        ":PunyJS.ui.gui.template.Errors"
+        , {"conflictResolution":"error"}
+    ]
+    , "defaults": [
+        ":PunyJS.ui.gui.template.Defaults"
+        , {"conflictResolution":"error"}
+    ]
+    , "eventEmitter": [":PunyJS.core.event._EventEmitter",[]]
+    , "template": [{
+        "expression": [":PunyJS.ui.gui.template._TemplateExpression", []]
+        , "isExpression": [".template.expression", ".isTemplateExpression"]
+        , "hasExpression": [".template.expression", ".hasTemplateExpression"]
+        , "handlers": [{
+            "repeat": [":PunyJS.ui.gui.template.handlers._Repeat", []]
+            , "if": [":PunyJS.ui.gui.template.handlers._Conditional", []]
+            , "elseif": [":PunyJS.ui.gui.template.handlers._Conditional", []]
+            , "else": [":PunyJS.ui.gui.template.handlers._Conditional", []]
+        }]
+        , "processor": [":PunyJS.ui.gui.template._TemplateProcessor", []]
+        , "attributeProcessor": [":PunyJS.ui.gui.template._AttributeProcessor", []]
+        , "event": [":PunyJS.ui.gui.template._TemplateEvent", []]
+        , "element": [":PunyJS.ui.gui.template._TemplateElement", []]
+        , "domFragmentManager": [":PunyJS.ui.gui.template._DOMFragmentManager", []]
+        , "xmlNamespaceMap": [":PunyJS.ui.gui.template.XMLNamespaceMap"]
+    }]
+}
