@@ -63,17 +63,7 @@ function _Parser(
     * A regular expression pattern to match literal expressions
     * @property
     */
-    var LITERAL_PATT = /^(?:('[^']+'|"[^"]+"|`[^`]+`|(?:0x)?[0-9.-]+)|true|false|null|undefined)$/
-    /**
-    * A regular expression pattern to match function patterns in expressions.
-    * @property
-    */
-    , FUNC_PATT = /^([A-Za-z0-9$.,()'\[\]_]+) ?\(([^)]+)?\)$/
-    /**
-    * A regular expression pattern to match bind patterns in expressions.
-    * @property
-    */
-    , BIND_FUNC_PATT = /^\(([^)]+)\) ?=> ?([A-Za-z0-9$.,"`'\[\]_]+)$/
+    var BIND_FUNC_PATT = /^\(([^)]+)\) ?=> ?([A-Za-z0-9$.,"`'\[\]_]+)$/
     /**
     * A regular expression pattern to match object patterns in expressions
     * @property
@@ -93,7 +83,7 @@ function _Parser(
     * A regular expression pattern to match conditional expressions
     * @property
     */
-    var COND_PATT = /^([\-A-Za-z0-9$.,()\[\]_\ '"`]+) (is|!is|isin|!isin|==|>|<|!=|>=|<=|!==|===) ([\-A-Za-z0-9$.,()\[\]_\ '"`]+)$/i
+    , COND_PATT = /^([\-A-Za-z0-9$.,()\[\]_\ '"`]+) (is|!is|isin|!isin|==|>|<|!=|>=|<=|!==|===) ([\-A-Za-z0-9$.,()\[\]_\ '"`]+)$/i
     /**
     * A regular expression pattern to match iterator expressions
     * @property
@@ -109,16 +99,6 @@ function _Parser(
     * @property
     */
     , FUNC_PATT = /^([A-Za-z0-9$.,()'"`\[\]_]+) ?\(([^)]+)?\)$/
-    /**
-    * A regular expression pattern to match indexer patterns in expressions
-    * @property
-    */
-    , INDX_PATT = /.*\]$/
-    /**
-    * A regular expression pattern to match tag patterns in object expressions
-    * @property
-    */
-    , EXPR_TAG_PATT = /^\$\{([^}]+)\}$/
     /**
     * A regular expression pattern to match logical 'OR' or "AND" expressions
     * @property
@@ -139,6 +119,11 @@ function _Parser(
     * @property
     */
     , ARRAY_OBJ_PATT = /((?:\[([A-Za-z0-9$.()_'\[\], "`\-\.]+)\])|(?:\{.+\}))/g
+    /**
+    * A regular expression pattern to replace indexer patterns
+    * @property
+    */
+    , INDXR_PATT = /\[(.+)\]/g
     ;
 
     return Parser;
@@ -349,8 +334,11 @@ function _Parser(
                 );
             }
             //or a varaible path
-            else if(!!VAR_PATT.exec(expressionStr)){
-                variables.push(expressionStr);
+            else if(!!VAR_PATT.exec(expressionStr)) {
+                addVariables(
+                    variables
+                    , expressionStr
+                );
                 return {
                     "type": "variable"
                     , "path": expressionStr
@@ -377,7 +365,10 @@ function _Parser(
         )
         ;
         //add the function name/path to the variables
-        variables.push(match[1]);
+        addVariables(
+            variables
+            , match[1]
+        );
         args.forEach(
             function parseEachArg(arg) {
                 var expr = parseExpression(
@@ -405,7 +396,10 @@ function _Parser(
             match[1]
         )
         ;
-        variables.push(treeNode.path);
+        addVariables(
+            variables
+            , treeNode.path
+        );
         //parse the arguments
         args.forEach(
             function parseEachArg(arg) {
@@ -503,5 +497,74 @@ function _Parser(
         );
 
         return treeNode;
+    }
+    /**
+    * @function
+    */
+    function addVariables(variables, variableStr) {
+        //if there are brackets see if the contents are a varaible
+        var mainVar = variableStr.replace(
+            INDXR_PATT
+            , replaceIndexer.bind(
+                null
+                , variables
+            )
+        )
+        ;
+        //if the result of updating indexers makes a different string, use that
+        if (mainVar !== variableStr) {
+            variables.push(mainVar);
+            //add a variable for each $every segment
+            mainVar.split(".")
+            .forEach(
+                function forEachPart(part, index, parts) {
+                    if (part === "$every") {
+                        //add the variable with the every
+                        addVariable(
+                            variables
+                            , parts
+                            .slice(0, index + 1)
+                            .join(".")
+                        );
+                        //add the variable without the $every
+                        addVariable(
+                            variables
+                            , parts
+                            .slice(0, index)
+                            .join(".")
+                        );
+                    }
+                }
+            );
+        }
+        else {
+            addVariable(
+                variables
+                , variableStr
+            );
+        }
+    }
+    /**
+    * @function
+    */
+    function replaceIndexer(variables, match, indexer) {
+        if (`${indexer}`.match(LITERAL_PATT)) {
+            return match;
+        }
+        addVariables(
+            variables
+            , indexer
+        );
+        return ".$every";
+    }
+    /**
+    * @function
+    */
+    function addVariable(variables, value) {
+        if (variables.indexOf(value) === -1) {
+            variables.push(
+                value
+            );
+        }
     }
 }

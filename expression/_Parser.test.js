@@ -326,3 +326,44 @@ function expressionParserTest8(
         }
     );
 }
+/**
+* @test
+*   @title PunyJS.ui.gui.expression._Parser: variable extraction
+*/
+function expressionParserTest9(
+    controller
+) {
+    var expressionParser, expressionTree, expression;
+
+    arrange(
+        async function arrangeFn() {
+            expressionParser = await controller(
+                [
+                    ":PunyJS.ui.gui.expression._Parser"
+                    , [
+
+                    ]
+                ]
+            );
+            expression = "state.list[context.$mask[state._index]]._display";
+        }
+    );
+
+    act(
+        function actFn() {
+            expressionTree = expressionParser(
+                expression
+            );
+        }
+    );
+
+    assert(
+        function assertFn(test) {
+            test("The expression tree variable should be")
+            .value(expressionTree, "variables")
+            .stringify()
+            .equals('["state._index","context.$mask.$every","context.$mask","state.list.$every._display","state.list.$every","state.list"]')
+            ;
+        }
+    );
+}

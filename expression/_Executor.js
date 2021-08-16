@@ -363,7 +363,7 @@ function _Executor(
             treeNode.path
             , context
         );
-        if (!ref.found) {debugger;
+        if (!ref.found) {
             throw new Error(
                 `${errors.ui.gui.expression.variable_not_found} ("${treeNode.path}")`
             );

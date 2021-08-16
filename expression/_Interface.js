@@ -19,6 +19,7 @@ function _Interface(
         );
         return {
             "variables": tree.variables
+            , "type": tree.type
             , "execute": function execute(context) {
                 return expression_executor(
                     tree
