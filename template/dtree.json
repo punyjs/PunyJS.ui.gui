@@ -22,6 +22,10 @@
         ":PunyJS.ui.gui.template.Defaults"
         , {"conflictResolution":"error"}
     ]
+    , "infos": [
+        ":PunyJS.ui.gui.template.Infos"
+        , {"conflictResolution":"error"}
+    ]
     , "eventEmitter": [":PunyJS.core.event._EventEmitter",[]]
     , "template": [{
         "expression": [":PunyJS.ui.gui.template._TemplateExpression", []]

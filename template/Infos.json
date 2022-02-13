@@ -1,0 +1,17 @@
+{
+    "ui": {
+        "gui": {
+            "template": {
+                "template_processed": "[Template Processed] The template has been processed"
+                , "attribute_processed": "[Attribute Processed] The attribute has been processed"
+                , "attribute_updated": "[Attribute Updated] The attribute has been updated"
+                , "attribute_destroyed": "[Attribute Destroyed] The attribute has been destroyed"
+                , "template_destroyed": "[Template Destroyed] The template has been destroyed"
+                , "template_expression_processed": "[Template Expression Processed] The template expression has been processed"
+                , "attribute_processing": "[Attribute Processing] Processing has been started for attribute"
+                , "attribute_updating": "[Attribute Updating] The attribute update process has started"
+                , "attribute_destroying": "[Attribute Destroying] The attribute destroying process has started"
+            }
+        }
+    }
+}

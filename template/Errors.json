@@ -2,12 +2,25 @@
     "ui": {
         "gui": {
             "template": {
-                "missing_tag_name": "[Missing Node Name] The template requires a nodeName property."
+                "missing_node_name": "[Missing Node Name] The template requires a nodeName property."
                 , "invalid_event_callback": "[Invalid Event Callback] The callback must be a function."
                 , "change_missing_dom_fragment": "[Change Missing Dom Fragment] A change to a proxy has fired for a missing fragment id."
                 , "mutation_missing_dom_fragment": "[Mutation Missing Dom Fragment] A DOM mutation event was fired for a missing fragment id."
                 , "invalid_fragment_change_action": "[Invalid Fragment Change Action] The DOM fragment change handler was fire with an invalid event action"
                 , "element_path_missing": "[Element Path Missing] The element path does not exist in the fragment's DOM tree"
+                , "handlers": {
+                    "invalid_template_expression": "[Invalid Template Expression] The handler requires a single expression."
+                    , "missing_attributes": "[Missing Attributes] The handler requires an attributes property"
+                    , "missing_expr_attribute": "[Missing Expr Attribute] The handler requires an 'expr' attribute."
+                    , "missing_text_property": "[Missing Text Property] The handler requires a 'text' property."
+                    , "invalid_iterator": "[Invalid Iterator] The handler requires the result of the expression be an iterator."
+                    , "missing_repeat_template": "[Missing Repeat Template] The repeat template is missing from the map."
+                    , "invalid_css_child": "[Invalid CSS Child] CSS children must be a string."
+                    , "missing_selectors": "[Missing Selectors] The style tag is missing the selectors property."
+                    , "missing_comment": "[Missing Comment] The comment handler requires a comment property with the text of the comment"
+                    , "missing_text": "[Missing Text] The text tag handler requires a text property"
+                    , "invalid_conditional_expression": "[Invalid Conditional Expression] A conditional tag or attribute must hold a valid template expression"
+                }
             }
         }
     }
