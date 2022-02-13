@@ -13,6 +13,7 @@
 
     , "base": [
         "{PunyJS.core.proxy}/dtree.json"
+        , "{PunyJS.core.event}/dtree.json"
         , "{PunyJS.statenet}/common/dtree.json"
         , "{PunyJS.ui.gui.expression}/dtree.json"
         , "{PunyJS.ui.gui.template}/dtree.json"

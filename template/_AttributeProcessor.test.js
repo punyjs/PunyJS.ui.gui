@@ -6,7 +6,7 @@ function attributeProcessorTest1(
     controller
     , mock_callback
 ) {
-    var attributeProcessor, template_expression, hasExpression, template_event, expression1, expression2, templateProxy, handlers, eventDetails;
+    var attributeProcessor, template_expression, hasExpression, template_event, expression1, expression2, templateProxy, eventDetails, context, isStateful;
 
     arrange(
         async function arrangeFn() {
@@ -32,38 +32,41 @@ function attributeProcessorTest1(
                 }
             );
             template_event = mock_callback();
-            handlers = {
-                "attrib1": mock_callback()
-            };
+            isStateful = mock_callback(
+                function mockIsStateful(obj) {
+                    return !!obj.isStateful;
+                }
+            );
             attributeProcessor = await controller(
                 [
                     ":PunyJS.ui.gui.template._AttributeProcessor"
                     , [
                         template_expression
                         , hasExpression
-                        , handlers
                         , template_event
+                        , isStateful
                     ]
                 ]
             );
             eventDetails = {};
             templateProxy = {
                 "tagName": "tag"
+                , "namespace": "$"
                 , "attributes": {
                     "attrib1": "value1"
                     , "attrib2": "${state.prop1 == state.prop2}"
                     , "onevent": "${func}"
                 }
-                , "context": {
-                    "state": {
-                        "prop1": "value1"
-                        , "isStateful": true
-                        , "$addListener": mock_callback(
-                            "listener_uuid"
-                        )
-                    }
-                }
                 , "on": mock_callback()
+            };
+            context = {
+                "state": {
+                    "prop1": "value1"
+                    , "isStateful": true
+                    , "$addListener": mock_callback(
+                        "listener_uuid"
+                    )
+                }
             };
         }
     );
@@ -72,6 +75,18 @@ function attributeProcessorTest1(
         function actFn() {
             attributeProcessor(
                 templateProxy
+                , context
+                , "attrib1"
+            );
+            attributeProcessor(
+                templateProxy
+                , context
+                , "attrib2"
+            );
+            attributeProcessor(
+                templateProxy
+                , context
+                , "onevent"
             );
             //manual fire the event
             if (!!templateProxy.events.event) {
@@ -94,23 +109,16 @@ function attributeProcessorTest1(
             .hasBeenCalledWithArg(1, 0, "${func}")
             ;
 
-            test("state add listener should be called once, with")
-            .value(templateProxy, "context.state.$addListener")
-            .hasBeenCalled(1)
-            .hasBeenCalledWithArg(0, 0, "prop1")
-            .hasBeenCalledWithArg(0, 1, expression1.update)
-            ;
-
             test("expression1 execute should be called")
             .value(expression1, "execute")
             .hasBeenCalled(1)
-            .hasBeenCalledWithArg(0, 0, templateProxy.context)
+            .hasBeenCalledWithArg(0, 0, context)
             ;
 
             test("expression2 execute should be called")
             .value(expression2, "execute")
             .hasBeenCalled(1)
-            .hasBeenCalledWithArg(0, 0, templateProxy.context)
+            .hasBeenCalledWithArg(0, 0, context)
             ;
 
             test("the attribute proxy events should have one property")
@@ -124,21 +132,13 @@ function attributeProcessorTest1(
             .hasBeenCalled(1)
             .hasBeenCalledWithArg(0, 0, "event")
             .hasBeenCalledWithArg(0, 1, "execute result")
-            .hasBeenCalledWithArg(0, 2, templateProxy.context)
+            .hasBeenCalledWithArg(0, 2, context)
             .hasBeenCalledWithArg(0, 3, eventDetails)
             ;
 
-            test("the attrib1 handler should be called once with")
-            .value(handlers, "attrib1")
-            .hasBeenCalled(1)
-            .hasBeenCalledWithArg(0, 0, templateProxy)
-            .hasBeenCalledWithArg(0, 1, "attrib1")
-            .hasBeenCalledWithArg(0, 2, "attribute")
-            ;
-
-            test("templateProxy on should be called twice")
+            test("templateProxy on should be called 6x")
             .value(templateProxy, "on")
-            .hasBeenCalled(2)
+            .hasBeenCalled(6)
             ;
         }
     );
@@ -151,7 +151,7 @@ function attributeProcessorTest2(
     controller
     , mock_callback
 ) {
-    var attributeProcessor, domProxy, templateProxy, watcher, stateManager, jsonTemplate, eventDetails;
+    var attributeProcessor, domProxy, templateProxy, watcher, context, stateManager, jsonTemplate, eventDetails, callback, attrib1Value1, attrib1Value2;
 
     arrange(
         async function arrangeFn() {
@@ -172,27 +172,24 @@ function attributeProcessorTest2(
                 ]
             );
             eventDetails = {};
+            callback = mock_callback();
             jsonTemplate = {
                 "tagName": "tag"
+                , "namespace": "$"
                 , "attributes": {
-                    "attrib1": {
-                        "attribProp1": "attribeValue1"
-                    }
-                    , "attrib2": "${state.prop1 == state.prop2}"
+                    "attrib1": "${state.prop1 == state.prop2}"
                     , "onevent": "${func}"
                 }
-                , "context": {
-                    "func": mock_callback()
-                    , "state": stateManager(
-                        {}
-                        , {
-                            "prop1": "value1"
-                            , "prop2": "value2"
-                        }
-                    )
-                }
-                , "expressions": {}
-                , "events": {}
+            };
+            context = {
+                "func": mock_callback()
+                , "state": stateManager(
+                    {}
+                    , {
+                        "prop1": "value1"
+                        , "prop2": "value2"
+                    }
+                )
             };
             [templateProxy, domProxy] = watcher(
                 jsonTemplate
@@ -205,36 +202,55 @@ function attributeProcessorTest2(
         function actFn() {
             attributeProcessor(
                 templateProxy
+                , context
+                , "attrib1"
+                , callback
             );
-            domProxy.attributes.attrib1 = "new value ${state.prop1}";
-            delete domProxy.attributes.attrib2;
-            templateProxy.context.state.prop1 = "new prop1 value";
+            attributeProcessor(
+                templateProxy
+                , context
+                , "onevent"
+            );
+
+            attrib1Value1 = templateProxy.attributes.attrib1;
+            context.state.prop2 = "value1";
+            attrib1Value2 = templateProxy.attributes.attrib1;
             templateProxy.events["event"](eventDetails);
+
+            domProxy.attributes.attrib1 = "${state.prop2}";
+            //delete an attribute
+            delete domProxy.attributes.attrib1;
+            //update the state, the deleted attribute should not respond
+            context.state.prop2 = "newvalue";
+            //destroy the template, the attributes should destroy themselves
+            templateProxy.destroyed = true;
         }
     );
 
     assert(
         function assertFn(test) {
-            test("templateProxy attributes.attrib1 should be")
-            .value(templateProxy, "attributes.attrib1")
-            .equals("new value new prop1 value")
+            test("The first attrib1 value should be")
+            .value(attrib1Value1)
+            .isFalse()
             ;
 
-            test("domProxy attributes.attrib1 should be")
-            .value(domProxy, "attributes.attrib1")
-            .equals("new value new prop1 value")
+            test("The second attrib1 value should be")
+            .value(attrib1Value2)
+            .isTrue()
             ;
 
-            test("attributes.attrib2 should not exists")
-            .value(templateProxy)
+            test("The attrib1 attribute should be gone")
+            .value(templateProxy, "attributes")
             .not
-            .hasProperty("attrib2")
+            .hasProperty("attrib1")
             ;
 
-            test("the event callback should be called once with")
-            .value(jsonTemplate, "context.func")
-            .hasBeenCalled(1)
-            .hasBeenCalledWithArg(0, 0, eventDetails)
+            //it's called once during the first processing and then again when the state poprety is changed
+            test("The callback should be called twice with")
+            .value(callback)
+            .hasBeenCalled(2)
+            .hasBeenCalledWithArg(0, 0, "attrib1")
+            .hasBeenCalledWithArg(1, 0, "attrib1")
             ;
         }
     );

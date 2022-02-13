@@ -4,13 +4,15 @@
 function _DOMFragmentManager(
     dom_createElement
     , dom_createElementNS
-    , dom_createTextNode
     , dom_mutationObserver
     , template_element
+    , template_domNodeHandlers
     , template_xmlNamespaceMap
     , is_nill
+    , is_objectValue
     , utils_uuid
     , utils_reference
+    , utils_lookup
     , defaults
     , errors
     , reporter
@@ -22,10 +24,25 @@ function _DOMFragmentManager(
     */
     var fragments = {}
     /**
-    * A regular ecpression pattern to replace instances of children in a path
+    * A regular expression pattern to replace instances of children in a path
     * @property
     */
     , CHILDREN_PATT = /children/g
+    /**
+    * A regular expression pattern to check a path for ends with children.{num}
+    * @property
+    */
+    , CHILD_INDEX_PATT = /children[.]([0-9]+)$/
+    /**
+    * A regular expression pattern to check a path for ends with attributes.{name}
+    * @property
+    */
+    , ATTRIB_PROP_PATT = /attributes[.]()$/
+    /**
+    * A regular expression pattern for trimming trailing dot
+    * @property
+    */
+    , TRAIL_DOT = /[.]$/
     ;
 
     /**
@@ -68,7 +85,7 @@ function _DOMFragmentManager(
         )
         //create a mutation observer so we can keep the proxy up to date
         , observer = new dom_mutationObserver(
-            mutationHandler.bind(
+            onDOMMutation.bind(
                 null
                 , fragmentId //the fragmentId is needed to update the proxy
             )
@@ -83,7 +100,7 @@ function _DOMFragmentManager(
                 , "attributes": true
                 , "subtree": true
             }
-            , "changeHandler": changeHandler.bind(
+            , "changeHandler": onDOMChange.bind(
                 null
                 , fragmentId //the fragment id is required to lookup fragment
             )
@@ -91,15 +108,28 @@ function _DOMFragmentManager(
         ;
         //add the fragment to the map
         fragments[fragmentId] = fragment;
+        //add change proxy listener
+        domProxy.on(
+            [
+              "children.*"
+              , "delete children.*"
+              , "attributes.*"
+              , "delete attributes.*"
+            ]
+            , fragment.changeHandler
+        );
+        //add a listener for the destroyed property
+        domProxy.on(
+            "destroyed"
+            , onTemplateDestroy.bind(
+                null
+                , fragmentId
+            )
+        );
         //start observing mutations
         observer.observe(
             element
             , fragment.observerOptions
-        );
-        //add change proxy listener
-        domProxy.on(
-            ["*", "delete *"]
-            , fragment.changeHandler
         );
 
         return fragmentId;
@@ -121,16 +151,21 @@ function _DOMFragmentManager(
     * @function
     */
     function createElement(domProxy, xmlns) {
-        //if this is a text node
-        if (domProxy.tagName === "text") {
-            return dom_createTextNode(
-                domProxy.attributes.text
+        //see if there is a custom node handler
+        var handler = utils_lookup(
+            domProxy.nodeName
+            , template_domNodeHandlers
+        );
+        if (!!handler) {
+            return handler(
+                domProxy
+                , xmlns
             );
         }
         //create the root element
         var element = !!xmlns
-            ? dom_createElementNS(xmlns, domProxy.tagName)
-            : dom_createElement(domProxy.tagName)
+            ? dom_createElementNS(xmlns, domProxy.nodeName)
+            : dom_createElement(domProxy.nodeName)
         ;
         //add the attributes
         setAttributes(
@@ -158,7 +193,13 @@ function _DOMFragmentManager(
                 var value = domProxy.attributes[key];
                 //null or undefined do not get added
                 if (is_nill(value)) {
+                    element.removeAttribute(
+                        key
+                    );
                     return;
+                }
+                if (is_objectValue(value)) {
+                    value = "[object]";
                 }
                 element.setAttribute(
                     key
@@ -217,11 +258,8 @@ function _DOMFragmentManager(
                 fragment.element
             );
         }
-        //remove the listener
-        fragment.proxy.off(
-            "*"
-            , fragment.changeHandler
-        );
+        //remove all the listener
+        fragment.proxy.off();
         //the destruction of the proxy is outside of this scope
     }
 
@@ -230,7 +268,7 @@ function _DOMFragmentManager(
     * Handles direct changes to the DOM and updates the proxy
     * @function
     */
-    function mutationHandler(fragmentId, mutationList) {
+    function onDOMMutation(fragmentId, mutationList) {
         var fragment = fragments[fragmentId];
         if (!fragment) {
             throw new Error(
@@ -286,12 +324,18 @@ function _DOMFragmentManager(
             fragment
             , mutation
         )
-        , ref = utils_reference(
-            path
-            , fragment.proxy
-        )
-        , proxyTarget = ref.value
+        , ref = !!path
+            && utils_reference(
+                path
+                , fragment.proxy
+            )
+        , proxyTarget = !!path
+            ? ref.value
+            : fragment.proxy
         ;
+        if (!!ref.exception) {
+            throw ref.exception;
+        }
         if (!ref.found) {
             ///TODO: what to do if there isn't a reference?
         }
@@ -313,7 +357,10 @@ function _DOMFragmentManager(
     */
     function determinePath(fragment, mutation) {
         //the scope starts with the target since it could be the root
-        var scope = mutation.target, path, childIndex;
+        var scope = mutation.target
+        , path
+        , childIndex
+        ;
         //loop up through the mutation's target's parents until the root element is found
         while(scope !== fragment.element) {
             //if there are no more parent elements
@@ -377,7 +424,7 @@ function _DOMFragmentManager(
     */
     function addNodes(proxyTarget, mutation) {
         //loop through the add nodes
-        mutation.addNodes
+        mutation.addedNodes
         .forEach(
             function forEachRemoveNode(node) {
                 var isPrevious = !!mutation.previousSibling
@@ -403,7 +450,7 @@ function _DOMFragmentManager(
     * Handles changes from the template proxy on the other side
     * @function
     */
-    function changeHandler(fragmentId, event) {
+    function onDOMChange(fragmentId, event) {
         var fragment = fragments[fragmentId];
         if (!fragment) {
             throw new Error(
@@ -413,13 +460,13 @@ function _DOMFragmentManager(
         //stop the observer
         fragment.observer.disconnect();
         //see if the update was for an attribute or children
-        if (event.key.indexOf("attributes") !== -1) {
+        if (event.key.match(ATTRIB_PROP_PATT)) {
             handleAttributeChange(
                 fragment
                 , event
             );
         }
-        else {
+        else if (event.key.match(CHILD_INDEX_PATT)) {
             handleChildChange(
                 fragment
                 , event
@@ -445,16 +492,18 @@ function _DOMFragmentManager(
         )
         , attribName = event.key.substring(attribIndex + 12)
         ;
-        if (event.action === "set") {
+        if (event.action === "append" || event.action === "update") {
             element.setAttribute(
                 attribName
                 , event.value
             );
         }
         else if (event.action === "delete") {
-            element.removeAttribute(
-                attribName
-            );
+            if (!!element.removeAttribute) {
+                element.removeAttribute(
+                    attribName
+                );
+            }
         }
         else {
             throw new Error(
@@ -466,19 +515,23 @@ function _DOMFragmentManager(
     * @function
     */
     function handleChildChange(fragment, event) {
+        //get n using the last children.n segment
         var childrenIndex = event.key
-            .lastIndexOf(".children[")
-        , elementKey = event.key
+            .lastIndexOf("children.")
+        , parentElementKey = event.key
             .substring(0, childrenIndex)
+            .replace(TRAIL_DOT, "")
         , elementIndex = parseInt(
             event.key
-            .substring(childrenIndex + 10)
-            .replace("]", "")
+            .substring(childrenIndex + 9)
+            .replace(TRAIL_DOT, "")
         )
-        , parentElement = getElement(
-            elementKey
-            , fragment.element
-        )
+        , parentElement = !parentElementKey
+            ? fragment.element
+            : getElement(
+                parentElementKey
+                , fragment.element
+            )
         , childElement
         , siblingElement
         ;
@@ -494,8 +547,16 @@ function _DOMFragmentManager(
             childElement = createElement(
                 event.value
             );
-            if (event.arrayAction === "append") {
+            if (event.action === "append") {
                 parentElement.appendChild(
+                    childElement
+                );
+            }
+            else if (event.action === "replace") {
+                siblingElement = parentElement
+                    .childNodes[elementIndex]
+                ;
+                siblingElement.replaceWith(
                     childElement
                 );
             }
@@ -520,13 +581,21 @@ function _DOMFragmentManager(
         , ref = utils_reference(
             elementPath
             , element
-        )
-        ;
+        );
         if (!ref.found) {
             throw new Error(
-                `${errors.ui.gui.template.element_path_missing} (${elementPath})`
+                `${errors.ui.gui.template.element_path_missing} (${path})`
             );
         }
         return ref.value;
+    }
+
+    /**
+    * @function
+    */
+    function onTemplateDestroy(fragmentId) {
+        destroyFragment(
+            fragmentId
+        );
     }
 }

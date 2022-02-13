@@ -18,6 +18,11 @@ function _TemplateExpression(
     */
     , EXPR_INDEX_PATT = /[<][$]([0-9]+)[$][>]/g
     /**
+    * A regular expression pattern for replacing escaped dots
+    * @property
+    */
+    , ESCP_DOT_PATT = /[\\][.]/g
+    /**
     * @constants
     */
     , cnsts = {
@@ -82,11 +87,19 @@ function _TemplateExpression(
             expressions
             .forEach(
                 function forEachExpression(expr, index) {
+                    //unescape any dots
                     var indexKey = `<\$${index}\$>`
                     //create the expression interface
                     , expressionInterface = expression_interface(
-                        expr
+                        //unescape any dots
+                        expr.replace(
+                            ESCP_DOT_PATT
+                            , "."
+                        )
                     );
+                    if (index === 0) {
+                        templateExpr.type = expressionInterface.type;
+                    }
                     //replace the expression text with the indexkey
                     templateExpr.intermediate =
                         templateExpr.intermediate.replace(
